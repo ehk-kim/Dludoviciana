@@ -1,0 +1,7 @@
+experiment	species	condition
+gameto_5	Physcomitrium_patens	gametophyte
+gameto_6	Physcomitrium_patens	gametophyte
+gameto_7	Physcomitrium_patens	gametophyte
+sporo_7	Physcomitrium_patens	sporophyte
+sporo_8	Physcomitrium_patens	sporophyte
+sporo_9	Physcomitrium_patens	sporophyte

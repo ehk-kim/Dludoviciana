@@ -1,0 +1,7 @@
+experiment	species	condition
+gameto_206	Dryopteris_ludoviciana	gametophyte
+gameto_199	Dryopteris_ludoviciana	gametophyte
+gameto_204	Dryopteris_ludoviciana	gametophyte
+sporo_200	Dryopteris_ludoviciana	sporophyte
+sporo_204	Dryopteris_ludoviciana	sporophyte
+sporo_206	Dryopteris_ludoviciana	sporophyte

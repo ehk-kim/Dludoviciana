@@ -1,0 +1,7 @@
+experiment	species	condition
+gameto_2	Polypodium_amorphum	gametophyte
+gameto_4	Polypodium_amorphum	gametophyte
+gameto_6	Polypodium_amorphum	gametophyte
+sporo_1	Polypodium_amorphum	sporophyte
+sporo_3	Polypodium_amorphum	sporophyte
+sporo_5	Polypodium_amorphum	sporophyte

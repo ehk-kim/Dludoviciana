@@ -1,0 +1,6 @@
+experiment	species	condition
+gameto_4	Arabidopsis_thaliana	gametophyte
+gameto_5	Arabidopsis_thaliana	gametophyte
+sporo_2	Arabidopsis_thaliana	sporophyte
+sporo_3	Arabidopsis_thaliana	sporophyte
+sporo_4	Arabidopsis_thaliana	sporophyte

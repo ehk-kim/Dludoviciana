@@ -1,0 +1,8 @@
+experiment	species	condition
+gameto_18	Pinus_tabuliformis	gametophyte
+gameto_19	Pinus_tabuliformis	gametophyte
+gameto_58	Pinus_tabuliformis	gametophyte
+gameto_59	Pinus_tabuliformis	gametophyte
+sporo_3	Pinus_tabuliformis	sporophyte
+sporo_4	Pinus_tabuliformis	sporophyte
+sporo_5	Pinus_tabuliformis	sporophyte

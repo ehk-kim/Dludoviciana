@@ -1,0 +1,5 @@
+experiment	species	condition
+gameto_1	Anthoceros_agrestis	gametophyte
+gameto_2	Anthoceros_agrestis	gametophyte
+sporo_5	Anthoceros_agrestis	sporophyte
+sporo_6	Anthoceros_agrestis	sporophyte
