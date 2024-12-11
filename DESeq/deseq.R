@@ -1,4 +1,4 @@
-setwd("C:\\Users\\fanta\\Desktop\\DGE\\DESeq")
+#setwd("C:\\Users\\fanta\\Desktop\\DGE\\DESeq")
 
 library(DESeq2)
 library(pheatmap)
@@ -17,39 +17,55 @@ createDESeq <- function(countsFile, colsFile) {
   # ddsObj$condition <- relevel(ddsObj$condition, ref="gametophyte")
   ddsObj <- DESeq(ddsObj)
   
+  res <- results(ddsObj, alpha = 0.05, lfcThreshold = 2, contrast = c("condition", "gametophyte", "sporophyte"))
+  
   # smallestGroupSize <- 2
   # keep <- rowSums(counts(ddsObj) >= 10) >= smallestGroupSize
   # ddsObj <- ddsObj[keep,]
+  res
   
   return(ddsObj)
 }
 
 resLFC <- function(ddsObj) {
-  res_GA <- results(ddsObj, lfcThreshold=2, altHypothesis="greaterAbs", alpha = 0.05)
-  res_LFC <- lfcShrink(ddsObj, coef="condition_sporophyte_vs_gametophyte", type="apeglm", res=res_GA)
+  #ddsObj$condition <- factor(ddsObj$condition, levels = c("gametophyte","sporophyte"))
+  #ddsObj$condition <- relevel(ddsObj$condition, ref = "sporophyte")
+  res_GA <- results(ddsObj, lfcThreshold=2, altHypothesis="greaterAbs", alpha = 0.05, contrast = c("condition", "gametophyte", "sporophyte"))
+  #res_GA <- results(ddsObj, lfcThreshold=2, altHypothesis="greaterAbs", alpha = 0.05)
+  res_LFC <- lfcShrink(ddsObj, type = "ashr", res=res_GA, contrast = c("condition", "gametophyte", "sporophyte"))
+  #res_LFC <- lfcShrink(ddsObj, type="apeglm", res=res_GA)
   summary(res_LFC)
   
   return(res_LFC)
 }
 
-sporoUpreg <- function(ddsRes) {
-  vec <- c()
-  for (i in  1:length(ddsRes$log2FoldChange)) {
-    if (ddsRes$log2FoldChange[i] > 0 & is.na(ddsRes$log2FoldChange[i])==FALSE & is.na(ddsRes$padj[i])==FALSE & ddsRes$padj[i] < 0.05) {
-      vec <- append(vec, names(ddsRes$log2FoldChange[i]))
-    }
-  }
-  return(vec)
+gametoUpreg <- function(ddsRes) {
+  ddsRes <-subset(ppat_LFC, padj < 0.05)
+  ddsRes1 <- as.data.frame(ddsRes)
+  vec <- ddsRes1 %>% filter(log2FoldChange >= 2)
+  vec1 <- rownames(vec)
+  
+  # vec <- c()
+  # for (i in  1:length(ddsRes$log2FoldChange)) {
+  #   if (ddsRes$log2FoldChange[i] >= 2 & is.na(ddsRes$log2FoldChange[i])==FALSE & is.na(ddsRes$padj[i])==FALSE & ddsRes$padj[i] < 0.05) {
+  #     vec <- append(vec, names(ddsRes$log2FoldChange[i]))
+  #   }
+  # }
+  return(vec1)
 }
 
-gametoUpreg <- function(ddsRes) {
-  vec <- c()
-  for (i in  1:length(ddsRes$log2FoldChange)) {
-    if (ddsRes$log2FoldChange[i] < 0 & is.na(ddsRes$log2FoldChange[i])==FALSE & is.na(ddsRes$padj[i])==FALSE & ddsRes$padj[i] < 0.05) {
-      vec <- append(vec, names(ddsRes$log2FoldChange[i]))
-    }
-  }
-  return(vec)
+gametoDownreg <- function(ddsRes) {
+  ddsRes <-subset(ppat_LFC, padj < 0.05)
+  ddsRes1 <- as.data.frame(ddsRes)
+  vec <- ddsRes1 %>% filter(log2FoldChange <= -2)
+  vec1 <- rownames(vec)
+  # vec <- c()
+  # for (i in  1:length(ddsRes$log2FoldChange)) {
+  #   if (ddsRes$log2FoldChange[i] <= -2 & is.na(ddsRes$log2FoldChange[i])==FALSE & is.na(ddsRes$padj[i])==FALSE & ddsRes$padj[i] < 0.05) {
+  #     vec <- append(vec, names(ddsRes$log2FoldChange[i]))
+  #   }
+  # }
+  return(vec1)
 }
 
 makeHeatmap <- function(ddsObj) {
@@ -125,8 +141,8 @@ ppat_LFC <- resLFC(ppat_dds)
 # outliers [1]       : 60, 0.21%
 # low counts [2]     : 3283, 12%
 
-ppat_sporo_up <- sporoUpreg(ppat_LFC)
 ppat_gameto_up <- gametoUpreg(ppat_LFC)
+ppat_gameto_down <- gametoDownreg(ppat_LFC)
 # got list of genes; not the same format as fasta headers. same as in .gff3 files
 
 aagr_LFC <- resLFC(aagr_dds)
