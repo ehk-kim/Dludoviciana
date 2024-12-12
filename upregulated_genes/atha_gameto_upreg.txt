@@ -1,4 +1,3 @@
-gameto_genes
 gene:AT1G01305
 gene:AT1G01355
 gene:AT1G01520

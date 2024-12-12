@@ -1,0 +1,179 @@
+---
+title: "deseq"
+output: html_document
+date: "2024-12-11"
+---
+
+```{r, echo = FALSE}
+library(DESeq2)
+library(pheatmap)
+library(ggplot2)
+library(dplyr)
+```
+
+Function definitions
+
+```{r cars}
+createDESeq <- function(countsFile, colsFile) {
+  counts <- read.delim(countsFile, row.name="gene_id")
+  cols <- read.delim(colsFile, row.names=1)
+  
+  ddsObj <- DESeqDataSetFromMatrix(countData=counts, colData=cols, design=~condition)
+  ddsObj <- DESeq(ddsObj)
+  
+  res <- results(ddsObj, alpha = 0.05, lfcThreshold = 2, contrast = c("condition", "gametophyte", "sporophyte"))
+  res
+  
+  return(ddsObj)
+}
+
+resLFC <- function(ddsObj) {
+  res_GA <- results(ddsObj, lfcThreshold=2, altHypothesis="greaterAbs", alpha = 0.05,
+                    contrast = c("condition", "gametophyte", "sporophyte"))
+  res_LFC <- lfcShrink(ddsObj, type = "ashr", res=res_GA,
+                       contrast = c("condition", "gametophyte", "sporophyte"))
+  summary(res_LFC)
+  
+  return(res_LFC)
+}
+
+gametoUpreg <- function(lfc_df) {
+  ddsRes <-subset(lfc_df, padj < 0.05)
+  ddsRes1 <- as.data.frame(ddsRes)
+  vec <- ddsRes1 %>% filter(log2FoldChange >= 2)
+  vec1 <- rownames(vec)
+  
+  return(vec1)
+}
+
+gametoDownreg <- function(lfc_df) {
+  ddsRes <-subset(lfc_df, padj < 0.05)
+  ddsRes1 <- as.data.frame(ddsRes)
+  vec <- ddsRes1 %>% filter(log2FoldChange <= -2)
+  vec1 <- rownames(vec)
+  
+  return(vec1)
+}
+
+makeHeatmap <- function(ddsObj) {
+  ntd <- normTransform(ddsObj)
+  select <- order(rowMeans(counts(ddsObj)), decreasing = TRUE) [1:50]
+  df <- as.data.frame(colData(ddsObj) [,c("species", "condition")])
+  phm <- assay(ntd)
+  pheatmap(phm[select,], cutree_cols = 2, annotation_col=df, cluster_rows = TRUE)
+}
+
+makeHeatmap2 <- function(ddsObj) {
+  vsd<-varianceStabilizingTransformation(ddsObj)
+  sampleDists <- dist(t(assay(vsd)))
+  sampleDistMatrix <- as.matrix(sampleDists)
+  rownames(sampleDistMatrix) <- paste(vsd$treatment)
+  colnames(sampleDistMatrix) <- paste(vsd$condition)
+  ph <- pheatmap(sampleDistMatrix,
+           clustering_distance_rows=sampleDists, 
+           clustering_distance_cols=sampleDists)
+  #ph <-  ph + scale_fill_continuous(limits = c(0,700), type="viridis")
+  ph
+}
+```
+
+Data preprocessing (only need to run once)
+
+```{r}
+pamo_counts <- read.delim("pamo_counts.txt")
+pamo_test <- pamo_counts %>%
+                group_by(gene_id) %>%
+                summarize(gameto_2 = sum(gameto_2),
+                          gameto_4 = sum(gameto_4),
+                          gameto_6 = sum(gameto_6),
+                          sporo_1 = sum(sporo_1),
+                          sporo_3 = sum(sporo_3),
+                          sporo_5 = sum(sporo_5))
+pamo_test <- as.data.frame(pamo_test)
+write.table(pamo_test, file = "pamo_counts_genelvl.txt", quote = F, row.names = F, sep = "\t")
+test <- read.delim("pamo_counts_genelvl.txt")
+
+dlud_counts <- read.delim("dlud_counts.txt")
+dlud_genelvl <- dlud_counts %>%
+  group_by(gene_id) %>%
+  summarize(gameto_206 = sum(gameto_206),
+            gameto_199 = sum(gameto_199),
+            gameto_204 = sum(gameto_204),
+            sporo_200 = sum(sporo_200),
+            sporo_204 = sum(sporo_204),
+            sporo_206 = sum(sporo_206))
+dlud_genelvl <- as.data.frame(dlud_genelvl)
+write.table(dlud_genelvl, file = "dlud_counts_genelvl.txt", quote = F, row.names = F, sep = "\t")
+```
+
+Create DESeq objects
+
+```{r, echo = FALSE}
+ppat_dds <- createDESeq("ppat_counts.txt", "ppat_sample_info.txt")
+aagr_dds <- createDESeq("aagr_counts.txt", "aagr_sample_info.txt")
+atha_dds <- createDESeq("atha_counts.txt", "atha_sample_info.txt")
+pamo_dds <- createDESeq("pamo_counts_genelvl.txt", "pamo_sample_info.txt")
+ptab_dds <- createDESeq("ptab_counts.txt", "ptab_sample_info.txt")
+dlud_dds <- createDESeq("dlud_counts_genelvl.txt", "dlud_sample_info.txt")
+```
+
+LFC shrinkages
+
+This reduces variability of lowly expressed genes.
+
+LFC > 0 (Up): number of genes upregulated in sporophyte compared to gametophyte
+LFC < 0 (Down): num genes downregulated in sporophyte compared to gametophyte
+
+```{r}
+# ----- Physcomitrium patens -----
+ppat_LFC <- resLFC(ppat_dds)
+
+ppat_gameto_down <- gametoDownreg(ppat_LFC)
+ppat_gameto_up <- gametoUpreg(ppat_LFC)
+# got list of genes; not the same format as fasta headers. same as in .gff3 files
+
+# ----- Anthoceros agrestis -----
+aagr_LFC <- resLFC(aagr_dds)
+
+aagr_gameto_down <- gametoDownreg(aagr_LFC)
+aagr_gameto_up <- gametoUpreg(aagr_LFC)
+
+# ----- Arabidopsis thaliana -----
+atha_LFC <- resLFC(atha_dds)
+
+atha_gameto_down <- gametoDownreg(atha_LFC)
+atha_gameto_up <- gametoUpreg(atha_LFC)
+
+# ----- Polypodium amorphum -----
+pamo_LFC <- resLFC(pamo_dds)
+
+pamo_gameto_down<- gametoDownreg(pamo_LFC)
+pamo_gameto_up <- gametoUpreg(pamo_LFC)
+
+# ----- Pinus tabuliformis -----
+ptab_LFC <- resLFC(ptab_dds)
+
+ptab_gameto_down <- gametoDownreg(ptab_LFC)
+ptab_gameto_up <- gametoUpreg(ptab_LFC)
+
+# ----- Dryopteris ludoviciana -----
+dlud_LFC <- resLFC(dlud_dds)
+
+dlud_gameto_down <- gametoDownreg(dlud_LFC)
+dlud_gameto_up <- gametoUpreg(dlud_LFC)
+```
+
+``` {r}
+write(ppat_gameto_down, file = "ppat_gameto_downreg.txt", sep = "\n")
+write(ppat_gameto_up, file = "ppat_gameto_upreg.txt", sep = "\n")
+write(aagr_gameto_down, file = "aagr_gameto_downreg.txt", sep = "\n")
+write(aagr_gameto_up, file = "aagr_gameto_upreg.txt", sep = "\n")
+write(atha_gameto_down, file = "atha_gameto_downreg.txt", sep = "\n")
+write(atha_gameto_up, file = "atha_gameto_upreg.txt", sep = "\n")
+write(pamo_gameto_down, file = "pamo_gameto_downreg.txt", sep = "\n")
+write(pamo_gameto_up, file = "pamo_gameto_upreg.txt", sep = "\n")
+write(ptab_gameto_down, file = "ptab_gameto_downreg.txt", sep = "\n")
+write(ptab_gameto_up, file = "ptab_gameto_upreg.txt", sep = "\n")
+write(dlud_gameto_down, file = "dlud_gameto_downreg.txt", sep = "\n")
+write(dlud_gameto_up, file = "dlud_gameto_upreg.txt", sep = "\n")
+```
