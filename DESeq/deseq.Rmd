@@ -13,7 +13,7 @@ library(dplyr)
 
 Function definitions
 
-```{r cars}
+```{r}
 createDESeq <- function(countsFile, colsFile) {
   counts <- read.delim(countsFile, row.name="gene_id")
   cols <- read.delim(colsFile, row.names=1)
@@ -106,7 +106,9 @@ dlud_genelvl <- as.data.frame(dlud_genelvl)
 write.table(dlud_genelvl, file = "dlud_counts_genelvl.txt", quote = F, row.names = F, sep = "\t")
 ```
 
-Create DESeq objects
+----- two methods of loading data -----
+
+1. Create DESeq objects
 
 ```{r, echo = FALSE}
 ppat_dds <- createDESeq("ppat_counts.txt", "ppat_sample_info.txt")
@@ -116,6 +118,19 @@ pamo_dds <- createDESeq("pamo_counts_genelvl.txt", "pamo_sample_info.txt")
 ptab_dds <- createDESeq("ptab_counts.txt", "ptab_sample_info.txt")
 dlud_dds <- createDESeq("dlud_counts_genelvl.txt", "dlud_sample_info.txt")
 ```
+
+2. Directly load RDS objects
+
+```{r, echo = FALSE}
+ppat_dds <- readRDS("ppat_dds.rds")
+aagr_dds <- readRDS("aagr_dds.rds")
+atha_dds <- readRDS("atha_dds.rds")
+pamo_dds <- readRDS("pamo_dds.rds")
+ptab_dds <- readRDS("ptab_dds.rds")
+dlud_dds <- readRDS("dlud_dds.rds")
+```
+
+--------------------------------------
 
 LFC shrinkages
 
